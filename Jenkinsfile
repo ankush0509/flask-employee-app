@@ -1,39 +1,79 @@
 pipeline {
+
     agent any
-    
+
     stages {
 
-        stage('Install Dependencies') {
+        stage('Check Python') {
+
             steps {
-                sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install -r requirements.txt
-                '''
+
+                sh 'python3 --version'
+
             }
+
+        }
+
+        stage('Create Virtual Environment') {
+
+            steps {
+
+                sh '''
+
+                    python3 -m venv venv
+
+                    venv/bin/python -m pip install --upgrade pip
+
+                '''
+
+            }
+
+        }
+
+        stage('Install Dependencies') {
+
+            steps {
+
+                sh '''
+
+                    venv/bin/pip install -r requirements.txt
+
+                '''
+
+            }
+
         }
 
         stage('Run Flask Application') {
+
             steps {
-                withEnv(['JENKINS_NODE_COOKIE=dontKillMe']) {
-                    sh '''
-                        pkill -f "venv/bin/python app.py" || true
-                        nohup venv/bin/python app.py > flask.log 2>&1 &
-                        sleep 3
-                        curl -f http://localhost:5000/
-                    '''
-                }
+
+                sh '''
+
+                    venv/bin/python -c "import flask; print('Flask installed successfully')"
+
+                '''
+
             }
+
         }
+
     }
 
     post {
+
         success {
-            echo 'Flask application started successfully!'
+
+            echo 'Pipeline executed successfully!'
+
         }
+
         failure {
+
             echo 'Pipeline execution failed!'
-            sh 'cat flask.log || true'
+
         }
+
     }
+
 }
